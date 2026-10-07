@@ -1,3 +1,5 @@
+package ThreadSafeCache;
+
 public class CacheEntry<V> {
     private final V value;
     private final long expirationTime;
@@ -19,4 +21,3 @@ public class CacheEntry<V> {
         return System.currentTimeMillis() > expirationTime;
     }
 }
-

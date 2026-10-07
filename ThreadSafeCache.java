@@ -1,3 +1,5 @@
+package ThreadSafeCache;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -11,6 +13,7 @@ public class ThreadSafeCache<K, V> {
     private final ConcurrentHashMap<K, CacheEntry<V>> cache;
     private final AtomicInteger hitCount;
     private final AtomicInteger missCount;
+    private final AtomicInteger evictionCount;
     private final ScheduledExecutorService cleanupExecutor;
     private final int maxCapacity;
     private final ReentrantLock capacityLock;
@@ -24,6 +27,7 @@ public class ThreadSafeCache<K, V> {
         cache = new ConcurrentHashMap<>();
         hitCount = new AtomicInteger(0);
         missCount = new AtomicInteger(0);
+        evictionCount = new AtomicInteger(0);
         cleanupExecutor = Executors.newSingleThreadScheduledExecutor();
         cleanupExecutor.scheduleAtFixedRate(
                 this::cleanupExpiredEntries,
@@ -39,6 +43,23 @@ public class ThreadSafeCache<K, V> {
 
     public int getMissCount() {
         return missCount.get();
+    }
+
+    public int getEvictionCount() {
+        return evictionCount.get();
+    }
+
+    public int size() {
+        cleanupExpiredEntries();
+        return cache.size();
+    }
+
+    public void clear() {
+        cache.clear();
+    }
+
+    public int getMaxCapacity() {
+        return maxCapacity;
     }
 
     public void put(K key, V value, long ttlMillis) {
@@ -57,8 +78,8 @@ public class ThreadSafeCache<K, V> {
 
     private void evictEntry() {
         K keyToRemove = cache.keySet().stream().findFirst().orElse(null);
-        if (keyToRemove != null) {
-            cache.remove(keyToRemove);
+        if (keyToRemove != null && cache.remove(keyToRemove) != null) {
+            evictionCount.incrementAndGet();
         }
     }
 
