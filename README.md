@@ -23,7 +23,7 @@ Java 17+ · Maven · JUnit 5 · No runtime dependencies
 | Class | Responsibility |
 | --- | --- |
 | `CacheEntry<V>` | Value, expiration timestamp, and expiration check |
-| `ThreadSafeCache<K,V>` | Cache operations, bounded insertion, cleanup scheduler, and counters |
+| `ThreadSafeCache<K, V>` | Cache operations, bounded insertion, cleanup scheduler, and counters |
 
 ```text
 ThreadSafeCache/
