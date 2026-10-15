@@ -6,7 +6,7 @@ Java 17+ · Maven · JUnit 5 · No production dependencies
 
 ## Features
 
-- Generic keys and values, with put, get, remove, contains, size, and clear operations.
+- Generic keys and values, with `put()`, `get()`, `remove()`, `containsKey()`, `size()`, and `clear()` operations.
 - Per-entry TTL expressed in milliseconds.
 - Lazy expiration checks plus scheduled cleanup every second.
 - A capacity lock serializes capacity checks, eviction, and insertion.
@@ -70,7 +70,7 @@ Surefire writes detailed results to `target/surefire-reports/`. Concurrency test
 
 ## Example behavior
 
-Use these classes from the `com.misho.cache` package (and import `java.math.BigDecimal` for the exchange example):
+Use these classes from the `com.misho.cache` package:
 
 ```java
 ThreadSafeCache<String, String> cache = new ThreadSafeCache<>(100);
@@ -89,7 +89,7 @@ try {
 
 Eviction is arbitrary, not LRU. Expired entries can occupy capacity until an access or cleanup removes them. `size()` cleans first but is still an observation under concurrent updates, not a transaction across calls. Hits and misses count `get()` calls only; `clear()` does not reset statistics.
 
-TTL uses wall-clock milliseconds. The implementation does not reject nonpositive TTLs. Keys cannot be null, and callers should avoid null values because `get()` uses null for a miss. The stored value itself is not made immutable or thread-safe. Atomic integer counters can eventually overflow.
+TTL uses wall-clock milliseconds. The implementation does not validate TTLs or guard against overflow when adding a TTL to the current timestamp. Keys cannot be null. Null values are accepted inside a `CacheEntry`, but a valid null-valued entry still counts as a hit and is indistinguishable from a miss through the return value alone. The stored value itself is not made immutable or thread-safe. Atomic integer counters can eventually overflow.
 
 Always call `shutdown()` when finished: the scheduler uses a non-daemon thread. This project has no persistence or distributed caching.
 
