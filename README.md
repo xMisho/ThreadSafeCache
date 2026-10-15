@@ -1,8 +1,8 @@
 # ThreadSafeCache
 
-A generic concurrent in-memory Java cache with per-entry TTL expiration, periodic cleanup, bounded capacity, arbitrary eviction, and usage statistics.
+A generic concurrent in-memory Java cache with per-entry TTL expiration, periodic cleanup, bounded capacity with simple arbitrary eviction, and usage statistics.
 
-Java 17+ · Maven · JUnit 5 · No production dependencies
+Java 17+ · Maven · JUnit 5 · No runtime dependencies
 
 ## Features
 
@@ -74,8 +74,10 @@ Use these classes from the `com.misho.cache` package:
 
 ```java
 ThreadSafeCache<String, String> cache = new ThreadSafeCache<>(100);
+
 try {
     cache.put("name", "Misho", 5_000);
+
     System.out.println(cache.get("name"));    // Misho
     System.out.println(cache.get("missing")); // null
     System.out.println(cache.getHitCount());  // 1
