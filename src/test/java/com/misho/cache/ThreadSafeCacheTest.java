@@ -1,18 +1,16 @@
-package ThreadSafeCache;
+package com.misho.cache;
 
-public class Main {
+import static org.junit.jupiter.api.Assertions.*;
+
+@org.junit.jupiter.api.Timeout(30)
+class ThreadSafeCacheTest {
 
     private static final long STANDARD_TTL = 5_000;
     private static final long STRESS_TTL = 60_000;
 
-    public static void main(String[] args) throws InterruptedException {
-        runFunctionalTests();
-        runMultithreadedStressTest();
 
-        System.out.println("\n=== ALL TESTS PASSED ===");
-    }
-
-    private static void runFunctionalTests() throws InterruptedException {
+    @org.junit.jupiter.api.Test
+    void functionalOperations() throws InterruptedException {
         System.out.println("=== FUNCTIONAL TESTS ===");
 
         ThreadSafeCache<String, String> cache = new ThreadSafeCache<>(3);
@@ -120,7 +118,8 @@ public class Main {
         System.out.println("Evictions: " + cache.getEvictionCount());
     }
 
-    private static void runMultithreadedStressTest() throws InterruptedException {
+    @org.junit.jupiter.api.Test
+    void concurrentOperations() throws InterruptedException {
         System.out.println("\n=== MULTITHREADED STRESS TEST ===");
 
         final int maxCapacity = 100;
@@ -161,6 +160,12 @@ public class Main {
                 }
             }, "Remover");
 
+            java.util.concurrent.atomic.AtomicReference<Throwable> failure =
+                    new java.util.concurrent.atomic.AtomicReference<>();
+            for (Thread worker : new Thread[]{writer1, writer2, reader1, reader2, remover}) {
+                worker.setUncaughtExceptionHandler((thread, error) -> failure.compareAndSet(null, error));
+            }
+
             writer1.start();
             writer2.start();
             reader1.start();
@@ -173,6 +178,9 @@ public class Main {
             reader2.join();
             remover.join();
 
+            if (failure.get() != null) {
+                throw new AssertionError("Worker thread failed", failure.get());
+            }
             validateStressTestResults(cache, readsPerThread * 2);
 
         } finally {
@@ -206,23 +214,25 @@ public class Main {
         System.out.println("Stress test passed.");
     }
 
-    private static void assertTrue(boolean condition, String message) {
-        if (!condition) {
-            throw new AssertionError(message);
+    @org.junit.jupiter.api.Test
+    void replacementAndClearPreserveStatistics() {
+        ThreadSafeCache<String, String> cache = new ThreadSafeCache<>(1);
+        try {
+            cache.put("key", "old", STANDARD_TTL);
+            cache.put("key", "new", STANDARD_TTL);
+            assertEquals("new", cache.get("key"));
+            assertEquals(0, cache.getEvictionCount());
+            cache.clear();
+            assertEquals(0, cache.size());
+            assertEquals(1, cache.getHitCount());
+        } finally {
+            cache.shutdown();
         }
     }
 
-    private static void assertFalse(boolean condition, String message) {
-        assertTrue(!condition, message);
-    }
-
-    private static void assertEquals(Object expected, Object actual, String message) {
-        if (expected == null ? actual != null : !expected.equals(actual)) {
-            throw new AssertionError(
-                    message +
-                    " | expected: " + expected +
-                    ", actual: " + actual
-            );
-        }
+    @org.junit.jupiter.api.Test
+    void rejectsInvalidCapacity() {
+        assertThrows(IllegalArgumentException.class, () -> new ThreadSafeCache<>(0));
+        assertThrows(IllegalArgumentException.class, () -> new ThreadSafeCache<>(-1));
     }
 }

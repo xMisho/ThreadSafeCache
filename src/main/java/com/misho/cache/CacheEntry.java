@@ -1,4 +1,4 @@
-package ThreadSafeCache;
+package com.misho.cache;
 
 public class CacheEntry<V> {
     private final V value;

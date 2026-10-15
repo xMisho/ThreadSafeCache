@@ -1,4 +1,4 @@
-package ThreadSafeCache;
+package com.misho.cache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,17 +101,15 @@ public class ThreadSafeCache<K, V> {
     }
 
     public boolean containsKey(K key) {
-    CacheEntry<V> entry = cache.get(key);
-
-    if (entry == null || entry.isExpired()) {
-        if (entry != null) {
-            cache.remove(key, entry);
+        CacheEntry<V> entry = cache.get(key);
+        if (entry == null || entry.isExpired()) {
+            if (entry != null) {
+                cache.remove(key, entry);
+            }
+            return false;
         }
-        return false;
+        return true;
     }
-
-    return true;
-}
 
     private void cleanupExpiredEntries() {
         for (Map.Entry<K, CacheEntry<V>> entry : cache.entrySet()) {
